@@ -1,14 +1,17 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
 import InputField from '../components/InputField';
 import NotificationBanner from '../components/NotificationBanner';
 import { Button } from '@/components/ui/button';
+import { User } from '../types';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -81,9 +84,17 @@ const LoginPage: React.FC = () => {
       });
 
       if (response.ok) {
-        // Simulate successful verification
+        // Create patient user object
+        const patientUser: User = {
+          id: `patient_${Date.now()}`,
+          name: 'Patient User', // This would come from API
+          phone: `+91${phoneNumber}`,
+          role: 'patient',
+          isActive: true
+        };
+
         const authToken = `auth_${Date.now()}_${Math.random()}`;
-        localStorage.setItem('authToken', authToken);
+        login(patientUser, authToken);
         localStorage.setItem('userPhone', `+91${phoneNumber}`);
         navigate('/book');
       } else {
@@ -92,8 +103,16 @@ const LoginPage: React.FC = () => {
     } catch (error) {
       console.log('OTP verification simulated - proceeding to booking');
       // Simulate successful verification for demo
+      const patientUser: User = {
+        id: `patient_${Date.now()}`,
+        name: 'Patient User',
+        phone: `+91${phoneNumber}`,
+        role: 'patient',
+        isActive: true
+      };
+
       const authToken = `auth_${Date.now()}_${Math.random()}`;
-      localStorage.setItem('authToken', authToken);
+      login(patientUser, authToken);
       localStorage.setItem('userPhone', `+91${phoneNumber}`);
       navigate('/book');
     } finally {
@@ -113,7 +132,7 @@ const LoginPage: React.FC = () => {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {otpSent ? 'Enter Verification Code' : 'Sign In'}
+              {otpSent ? 'Enter Verification Code' : 'Patient Sign In'}
             </h2>
             <p className="text-gray-600">
               {otpSent 
@@ -121,6 +140,14 @@ const LoginPage: React.FC = () => {
                 : 'Enter your phone number to get started'
               }
             </p>
+            <div className="mt-4">
+              <a 
+                href="/admin/login" 
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Are you an admin? Login here
+              </a>
+            </div>
           </div>
 
           <div className="bg-white p-8 rounded-lg shadow-lg">

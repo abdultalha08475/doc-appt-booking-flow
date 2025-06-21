@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { Button } from '@/components/ui/button';
 import ThemeToggle from './ThemeToggle';
 
 interface HeaderNavProps {
@@ -8,6 +10,12 @@ interface HeaderNavProps {
 }
 
 const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
+  const { isAuthenticated, logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,7 +32,22 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
           
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            {children}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Welcome, {user?.name}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              children
+            )}
           </div>
         </div>
       </div>
