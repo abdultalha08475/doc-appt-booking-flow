@@ -46,7 +46,14 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
                 </Button>
               </div>
             ) : (
-              children
+              <div className="flex items-center space-x-3">
+                <Link to="/admin/login">
+                  <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+                    Admin Login
+                  </Button>
+                </Link>
+                {children}
+              </div>
             )}
           </div>
         </div>
