@@ -22,23 +22,27 @@ const AppointmentsPage: React.FC = () => {
           doctorId: 'doc1',
           doctorName: 'Sarah Johnson',
           patientName: 'John Doe',
+          patientPhone: '+91-9876543210',
           date: '2024-12-22',
           time: '10:00',
           reason: 'General Consultation',
           status: 'confirmed',
           queueNumber: 12,
-          notes: 'Regular checkup'
+          notes: 'Regular checkup',
+          createdAt: '2024-12-21T10:00:00Z'
         },
         {
           id: '2',
           doctorId: 'doc2',
           doctorName: 'Michael Chen',
           patientName: 'John Doe',
+          patientPhone: '+91-9876543210',
           date: '2024-12-18',
           time: '14:30',
           reason: 'Follow-up',
           status: 'completed',
-          queueNumber: 5
+          queueNumber: 5,
+          createdAt: '2024-12-17T14:30:00Z'
         }
       ];
       setAppointments(mockAppointments);

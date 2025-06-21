@@ -44,7 +44,8 @@ const BookPage: React.FC = () => {
       rating: 4.8,
       avatar: '/placeholder.svg',
       availability: [],
-      fee: 500
+      fee: 500,
+      isActive: true
     },
     {
       id: 'doc2',
@@ -54,7 +55,8 @@ const BookPage: React.FC = () => {
       rating: 4.9,
       avatar: '/placeholder.svg',
       availability: [],
-      fee: 800
+      fee: 800,
+      isActive: true
     },
     {
       id: 'doc3',
@@ -64,7 +66,8 @@ const BookPage: React.FC = () => {
       rating: 4.7,
       avatar: '/placeholder.svg',
       availability: [],
-      fee: 600
+      fee: 600,
+      isActive: true
     }
   ];
 
