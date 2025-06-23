@@ -3,6 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, User, Shield } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 interface HeaderNavProps {
@@ -47,21 +54,52 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Link to="/register">
-                  <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                    Register
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                    Login
-                  </Button>
-                </Link>
-                <Link to="/admin/login">
-                  <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                    Admin Login
-                  </Button>
-                </Link>
+                {/* User Authentication Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+                      <User className="w-4 h-4 mr-2" />
+                      User
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/login" className="w-full">
+                        Sign In
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/register" className="w-full">
+                        Sign Up
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Admin Authentication Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/login" className="w-full">
+                        Admin Sign In
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/login" className="w-full">
+                        Admin Sign Up
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
                 {children}
               </div>
             )}
