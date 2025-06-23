@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeaderNav from '../components/HeaderNav';
@@ -105,6 +104,7 @@ const BookPage: React.FC = () => {
     
     setLoading(true);
     try {
+      // Use explicit insert with queue_number set to 0 - trigger will assign actual value
       const { data, error } = await supabase
         .from('appointments')
         .insert({
@@ -116,8 +116,9 @@ const BookPage: React.FC = () => {
           appointment_date: formData.date,
           time_slot: 'Emergency',
           reason: 'Emergency',
-          status: 'confirmed'
-        })
+          status: 'confirmed',
+          queue_number: 0 // Trigger will override this
+        } as any)
         .select()
         .single();
 
@@ -172,6 +173,7 @@ const BookPage: React.FC = () => {
     setLoading(true);
 
     try {
+      // Use explicit insert with queue_number set to 0 - trigger will assign actual value
       const { data, error } = await supabase
         .from('appointments')
         .insert({
@@ -183,8 +185,9 @@ const BookPage: React.FC = () => {
           appointment_date: formData.date,
           time_slot: selectedSlot,
           reason: formData.reason,
-          status: 'confirmed'
-        })
+          status: 'confirmed',
+          queue_number: 0 // Trigger will override this
+        } as any)
         .select()
         .single();
 
