@@ -1,185 +1,202 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
-import InputField from '../components/InputField';
-import NotificationBanner from '../components/NotificationBanner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
-    confirmPassword: '',
-    phone: ''
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error' | 'info';
-  } | null>(null);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      setNotification({
-        message: 'Passwords do not match',
-        type: 'error'
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
       });
       return;
     }
 
     if (formData.password.length < 6) {
-      setNotification({
-        message: 'Password must be at least 6 characters long',
-        type: 'error'
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
+
     try {
+      const redirectUrl = `${window.location.origin}/email-confirmation`;
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: redirectUrl,
           data: {
             name: formData.name,
-            phone: formData.phone
+            phone: formData.phone,
           }
         }
       });
 
       if (error) {
+        if (error.message.includes('already registered')) {
+          toast({
+            title: "Account exists",
+            description: "An account with this email already exists. Please try logging in instead.",
+            variant: "destructive",
+          });
+          return;
+        }
         throw error;
       }
 
-      if (data.user && !data.session) {
-        setNotification({
-          message: 'Please check your email for verification link to complete registration',
-          type: 'success'
-        });
-      } else {
-        setNotification({
-          message: 'Registration successful! Redirecting...',
-          type: 'success'
-        });
-        setTimeout(() => navigate('/book'), 2000);
-      }
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to confirm your account before logging in.",
+      });
+
+      // Redirect to login page with a message
+      navigate('/login?message=Please check your email to confirm your account');
+      
     } catch (error: any) {
       console.error('Registration error:', error);
-      setNotification({
-        message: error.message || 'Registration failed. Please try again.',
-        type: 'error'
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred during registration. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const dismissNotification = () => {
-    setNotification(null);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <HeaderNav />
       
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+        <Card className="max-w-md w-full p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Create Account
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               Join us to book appointments easily
             </p>
-            <div className="mt-4">
-              <Link 
-                to="/login" 
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                Already have an account? Sign in here
-              </Link>
-            </div>
           </div>
 
-          <div className="bg-white p-8 rounded-lg shadow-lg">
-            {notification && (
-              <div className="mb-6">
-                <NotificationBanner
-                  message={notification.message}
-                  type={notification.type}
-                  onDismiss={dismissNotification}
-                />
-              </div>
-            )}
-
-            <form onSubmit={handleRegister} className="space-y-6">
-              <InputField
-                label="Full Name"
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
                 value={formData.name}
-                onChange={(value) => handleInputChange('name', value)}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter your full name"
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
 
-              <InputField
-                label="Email Address"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email Address
+              </label>
+              <input
                 type="email"
                 value={formData.email}
-                onChange={(value) => handleInputChange('email', value)}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="Enter your email"
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
 
-              <InputField
-                label="Phone Number"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Phone Number
+              </label>
+              <input
                 type="tel"
                 value={formData.phone}
-                onChange={(value) => handleInputChange('phone', value)}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="Enter your phone number"
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
 
-              <InputField
-                label="Password"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Password
+              </label>
+              <input
                 type="password"
                 value={formData.password}
-                onChange={(value) => handleInputChange('password', value)}
-                placeholder="Create a password (min 6 characters)"
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Create a password"
                 required
+                minLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
 
-              <InputField
-                label="Confirm Password"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Confirm Password
+              </label>
+              <input
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(value) => handleInputChange('confirmPassword', value)}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 placeholder="Confirm your password"
                 required
+                minLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Button>
-            </form>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                Sign in here
+              </Link>
+            </p>
           </div>
-        </div>
+        </Card>
       </div>
       
       <Footer />

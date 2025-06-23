@@ -5,95 +5,135 @@ import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
 import { Button } from '@/components/ui/button';
-import { Appointment } from '../types';
 import { Calendar, Plus } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Appointment } from '../types';
 
 const AppointmentsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          doctorId: 'doc1',
-          doctorName: 'Sarah Johnson',
-          patientName: 'John Doe',
-          patientPhone: '+91-9876543210',
-          date: '2024-12-22',
-          time: '10:00',
-          reason: 'General Consultation',
-          status: 'confirmed',
-          queueNumber: 12,
-          notes: 'Regular checkup',
-          createdAt: '2024-12-21T10:00:00Z'
-        },
-        {
-          id: '2',
-          doctorId: 'doc2',
-          doctorName: 'Michael Chen',
-          patientName: 'John Doe',
-          patientPhone: '+91-9876543210',
-          date: '2024-12-18',
-          time: '14:30',
-          reason: 'Follow-up',
-          status: 'completed',
-          queueNumber: 5,
-          createdAt: '2024-12-17T14:30:00Z'
-        }
-      ];
-      setAppointments(mockAppointments);
+    if (user) {
+      fetchAppointments();
+    }
+  }, [user]);
+
+  const fetchAppointments = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('appointment_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedAppointments: Appointment[] = data.map(apt => ({
+        id: apt.id,
+        doctorId: apt.doctor_id,
+        doctorName: apt.doctor_name,
+        patientName: apt.patient_name,
+        patientPhone: apt.patient_phone,
+        date: apt.appointment_date,
+        time: apt.time_slot,
+        reason: apt.reason,
+        status: apt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'in-progress',
+        queueNumber: apt.queue_number,
+        notes: apt.notes || '',
+        createdAt: apt.created_at
+      }));
+
+      setAppointments(formattedAppointments);
+    } catch (error: any) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load appointments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userPhone');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  const handleReschedule = (id: string) => {
+    toast({
+      title: "Feature Coming Soon",
+      description: "Appointment rescheduling will be available soon.",
+    });
+  };
+
+  const handleCancel = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Appointment cancelled successfully.",
+      });
+
+      fetchAppointments(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error cancelling appointment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel appointment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewDetails = (id: string) => {
+    toast({
+      title: "Feature Coming Soon",
+      description: "Detailed appointment view will be available soon.",
+    });
+  };
+
+  if (!user) {
     navigate('/login');
-  };
-
-  const handleReschedule = (appointmentId: string) => {
-    console.log('Reschedule appointment:', appointmentId);
-    // Implement reschedule logic
-  };
-
-  const handleCancel = (appointmentId: string) => {
-    console.log('Cancel appointment:', appointmentId);
-    // Implement cancel logic
-    setAppointments(prev => 
-      prev.map(apt => 
-        apt.id === appointmentId 
-          ? { ...apt, status: 'cancelled' as const }
-          : apt
-      )
-    );
-  };
-
-  const handleViewDetails = (appointmentId: string) => {
-    console.log('View details:', appointmentId);
-    // Navigate to appointment details
-  };
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <HeaderNav>
         <Button
-          variant="default"
+          variant="outline"
           onClick={() => navigate('/book')}
           className="mr-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          New Booking
+          <Plus className="h-4 w-4 mr-2" />
+          New Appointment
         </Button>
         <Button
           variant="outline"
           onClick={handleLogout}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
         >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
           <span>Logout</span>
         </Button>
       </HeaderNav>
@@ -104,7 +144,7 @@ const AppointmentsPage: React.FC = () => {
             My Appointments
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Manage your doctor appointments
+            View and manage your scheduled appointments
           </p>
         </div>
 
@@ -120,16 +160,19 @@ const AppointmentsPage: React.FC = () => {
               No appointments yet
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Book your first appointment to get started
+              You haven't booked any appointments yet. Start by booking your first appointment.
             </p>
-            <Button onClick={() => navigate('/book')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Book Appointment
+            <Button
+              onClick={() => navigate('/book')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Book Your First Appointment
             </Button>
           </div>
         ) : (
           <div className="space-y-6">
-            {appointments.map(appointment => (
+            {appointments.map((appointment) => (
               <AppointmentCard
                 key={appointment.id}
                 appointment={appointment}
@@ -140,6 +183,15 @@ const AppointmentsPage: React.FC = () => {
             ))}
           </div>
         )}
+
+        <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-300">
+          <p>
+            Need help managing your appointments? Call our support line at{' '}
+            <a href="tel:+911234567890" className="text-blue-600 hover:text-blue-700 font-medium">
+              +91-123-456-7890
+            </a>
+          </p>
+        </div>
       </div>
 
       <Footer />
