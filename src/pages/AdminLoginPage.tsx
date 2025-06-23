@@ -7,10 +7,12 @@ import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   const [credentials, setCredentials] = useState({
     email: '',
@@ -31,15 +33,34 @@ const AdminLoginPage: React.FC = () => {
       const { data, error } = await login(credentials.email, credentials.password);
 
       if (error) {
-        throw error;
+        if (error.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the verification link before logging in.');
+          toast({
+            title: "Email verification required",
+            description: "Please check your email and click the verification link to complete your registration.",
+            variant: "destructive"
+          });
+        } else {
+          throw error;
+        }
+        return;
       }
 
       if (data.user) {
+        toast({
+          title: "Login successful",
+          description: "Welcome to the admin panel!",
+        });
         navigate('/admin');
       }
     } catch (error: any) {
       console.error('Admin login error:', error);
       setError(error.message || 'Login failed. Please check your credentials.');
+      toast({
+        title: "Login failed",
+        description: error.message || 'Please check your credentials and try again.',
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -50,11 +71,21 @@ const AdminLoginPage: React.FC = () => {
     
     if (credentials.password !== credentials.confirmPassword) {
       setError('Passwords do not match');
+      toast({
+        title: "Password mismatch",
+        description: "Please make sure both passwords match.",
+        variant: "destructive"
+      });
       return;
     }
 
     if (credentials.password.length < 6) {
       setError('Password must be at least 6 characters long');
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -63,7 +94,7 @@ const AdminLoginPage: React.FC = () => {
     setSuccess('');
 
     try {
-      // Register the admin user
+      // Register the admin user with email confirmation required
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -93,7 +124,22 @@ const AdminLoginPage: React.FC = () => {
           console.error('Error updating admin profile:', profileError);
         }
 
-        setSuccess('Admin account created successfully! You can now log in.');
+        if (!data.session) {
+          // Email confirmation is required
+          setSuccess('Admin account created successfully! Please check your email and click the verification link to complete your registration.');
+          toast({
+            title: "Registration successful!",
+            description: "Please check your email and click the verification link to complete your registration.",
+          });
+        } else {
+          // User is automatically logged in (email confirmation disabled)
+          setSuccess('Admin account created and verified successfully! You can now log in.');
+          toast({
+            title: "Registration complete!",
+            description: "Your admin account has been created successfully.",
+          });
+        }
+        
         setIsRegistering(false);
         setCredentials({
           email: credentials.email,
@@ -105,6 +151,11 @@ const AdminLoginPage: React.FC = () => {
     } catch (error: any) {
       console.error('Admin registration error:', error);
       setError(error.message || 'Registration failed. Please try again.');
+      toast({
+        title: "Registration failed",
+        description: error.message || 'Please try again.',
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -134,7 +185,7 @@ const AdminLoginPage: React.FC = () => {
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
               {isRegistering 
-                ? 'Create a new admin account' 
+                ? 'Create a new admin account with email verification' 
                 : 'Access the clinic management dashboard'
               }
             </p>
@@ -242,6 +293,15 @@ const AdminLoginPage: React.FC = () => {
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 Default admin credentials: admin@docbook.com / admin123
+              </p>
+            </div>
+          )}
+
+          {isRegistering && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-blue-600 text-sm">
+                <strong>Note:</strong> After registration, you'll receive an email verification link. 
+                You must click this link before you can log in to the admin panel.
               </p>
             </div>
           )}
