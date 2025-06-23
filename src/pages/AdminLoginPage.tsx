@@ -6,6 +6,7 @@ import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { createAdminUser } from '../utils/createAdminUser';
 
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ const AdminLoginPage: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [adminCreated, setAdminCreated] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +43,30 @@ const AdminLoginPage: React.FC = () => {
     }
   };
 
+  const handleCreateAdmin = async () => {
+    setCreatingAdmin(true);
+    setError('');
+
+    try {
+      const result = await createAdminUser();
+      
+      if (result.success) {
+        setAdminCreated(true);
+        setCredentials({
+          email: 'admin@docbook.com',
+          password: 'admin123'
+        });
+        console.log('Admin user created! You can now log in with admin@docbook.com / admin123');
+      } else {
+        setError(result.error || 'Failed to create admin user');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to create admin user');
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <HeaderNav />
@@ -61,6 +88,29 @@ const AdminLoginPage: React.FC = () => {
             </div>
           )}
 
+          {adminCreated && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-green-600 text-sm">
+                Admin user created successfully! You can now log in.
+              </p>
+            </div>
+          )}
+
+          {!adminCreated && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-blue-600 text-sm mb-3">
+                No admin user exists yet. Create one to get started.
+              </p>
+              <Button
+                onClick={handleCreateAdmin}
+                disabled={creatingAdmin}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {creatingAdmin ? 'Creating Admin User...' : 'Create Admin User'}
+              </Button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -70,7 +120,7 @@ const AdminLoginPage: React.FC = () => {
                 type="email"
                 value={credentials.email}
                 onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                placeholder="admin@clinic.com"
+                placeholder="admin@docbook.com"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -101,7 +151,7 @@ const AdminLoginPage: React.FC = () => {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Note: Admin access requires proper authentication
+              Default admin credentials: admin@docbook.com / admin123
             </p>
           </div>
         </Card>

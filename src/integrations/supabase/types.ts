@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          appointment_date: string
+          created_at: string
+          doctor_id: string
+          doctor_name: string
+          id: string
+          notes: string | null
+          patient_name: string
+          patient_phone: string
+          queue_number: number
+          reason: string
+          status: string
+          time_slot: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string
+          doctor_id: string
+          doctor_name: string
+          id?: string
+          notes?: string | null
+          patient_name: string
+          patient_phone: string
+          queue_number: number
+          reason: string
+          status?: string
+          time_slot: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string
+          doctor_id?: string
+          doctor_name?: string
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          patient_phone?: string
+          queue_number?: number
+          reason?: string
+          status?: string
+          time_slot?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -38,7 +89,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_next_queue_number: {
+        Args: { appointment_date: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
