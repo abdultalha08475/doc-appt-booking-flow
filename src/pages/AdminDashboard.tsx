@@ -10,8 +10,10 @@ import {
   Clock,
   DollarSign,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<ClinicStats>({
@@ -34,16 +36,23 @@ const AdminDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching dashboard data...');
       
       // Get today's date
       const today = new Date().toISOString().split('T')[0];
+      console.log('Today date:', today);
       
       // Fetch all appointments
       const { data: allAppointments, error: allError } = await supabase
         .from('appointments')
         .select('*');
 
-      if (allError) throw allError;
+      if (allError) {
+        console.error('Error fetching all appointments:', allError);
+        throw allError;
+      }
+
+      console.log('All appointments:', allAppointments);
 
       // Fetch today's appointments
       const { data: todayAppointments, error: todayError } = await supabase
@@ -52,7 +61,12 @@ const AdminDashboard: React.FC = () => {
         .eq('appointment_date', today)
         .order('queue_number', { ascending: true });
 
-      if (todayError) throw todayError;
+      if (todayError) {
+        console.error('Error fetching today appointments:', todayError);
+        throw todayError;
+      }
+
+      console.log('Today appointments:', todayAppointments);
 
       // Calculate statistics
       const totalPatients = new Set(allAppointments?.map(apt => apt.patient_name) || []).size;
@@ -63,14 +77,17 @@ const AdminDashboard: React.FC = () => {
       // Mock revenue calculation (you can implement actual pricing logic)
       const revenue = completedCount * 500; // Assuming ₹500 per appointment
       
-      setStats({
+      const calculatedStats = {
         totalPatients,
         todayAppointments: todayCount,
         pendingAppointments: pendingCount,
         completedAppointments: completedCount,
         revenue,
         averageWaitTime: 15 // Mock average wait time
-      });
+      };
+
+      console.log('Calculated stats:', calculatedStats);
+      setStats(calculatedStats);
 
       // Set recent appointments (today's appointments)
       const formattedAppointments: Appointment[] = (todayAppointments || []).map(apt => ({
@@ -87,6 +104,7 @@ const AdminDashboard: React.FC = () => {
         createdAt: apt.created_at
       }));
 
+      console.log('Formatted appointments:', formattedAppointments);
       setRecentAppointments(formattedAppointments);
 
     } catch (error: any) {
@@ -110,7 +128,7 @@ const AdminDashboard: React.FC = () => {
       bgColor: 'bg-blue-50 dark:bg-blue-900/20'
     },
     {
-      title: 'Today\'s Appointments',
+      title: 'Today\'s Appointments',  
       value: stats.todayAppointments,
       icon: Calendar,
       color: 'text-green-600',
@@ -160,13 +178,19 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Dashboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Welcome to your clinic management dashboard
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Welcome to your clinic management dashboard
+          </p>
+        </div>
+        <Button onClick={fetchDashboardData} variant="outline" size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       {/* Stats Grid */}

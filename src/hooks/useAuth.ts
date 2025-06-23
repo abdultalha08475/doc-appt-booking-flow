@@ -33,6 +33,7 @@ export const useAuth = () => {
                 .eq('id', session.user.id)
                 .maybeSingle();
               
+              console.log('User profile:', profile);
               setUserProfile(profile);
             } catch (error) {
               console.error('Error fetching user profile:', error);
@@ -74,7 +75,23 @@ export const useAuth = () => {
     return { error };
   };
 
-  const isAdmin = () => userProfile?.name === 'admin' || user?.email === 'admin@docbook.com';
+  // Updated admin detection logic
+  const isAdmin = () => {
+    console.log('Checking admin status:', {
+      userProfile,
+      userEmail: user?.email,
+      userMetadata: user?.user_metadata
+    });
+    
+    // Check multiple conditions for admin
+    return (
+      userProfile?.name === 'Admin' || 
+      user?.email === 'admin@docbook.com' ||
+      user?.user_metadata?.name === 'Admin' ||
+      user?.email === 'abdultalha080103@gmail.com'
+    );
+  };
+  
   const isPatient = () => !isAdmin();
   const isDoctor = () => false; // For future implementation
 
