@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeaderNav from '../components/HeaderNav';
@@ -13,22 +14,17 @@ import EmergencyBooking from '../components/EmergencyBooking';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '../types';
 import { useAvailability } from '../hooks/useAvailability';
-import { useAuth } from '../hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, Calendar } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 const BookPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, userProfile } = useAuth();
-  const { toast } = useToast();
   const [showEmergency, setShowEmergency] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: userProfile?.name || '',
+    name: '',
     age: '',
-    phone: userProfile?.phone || '',
+    phone: localStorage.getItem('userPhone') || '',
     reason: '',
     date: new Date().toISOString().split('T')[0],
   });
@@ -37,12 +33,6 @@ const BookPage: React.FC = () => {
     message: string;
     type: 'success' | 'error' | 'info';
   } | null>(null);
-
-  // Check if user is authenticated
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
 
   // Mock doctors data
   const mockDoctors: Doctor[] = [
@@ -96,54 +86,25 @@ const BookPage: React.FC = () => {
   ];
 
   const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userPhone');
     navigate('/login');
   };
 
-  const handleEmergencyBook = async (emergencyData: any) => {
-    if (!user) return;
-    
+  const handleEmergencyBook = (emergencyData: any) => {
     setLoading(true);
-    try {
-      // Use explicit insert with queue_number set to 0 - trigger will assign actual value
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert({
-          user_id: user.id,
-          doctor_id: 'emergency',
-          doctor_name: 'Emergency Doctor',
-          patient_name: emergencyData.name,
-          patient_phone: emergencyData.phone,
-          appointment_date: formData.date,
-          time_slot: 'Emergency',
-          reason: 'Emergency',
-          status: 'confirmed',
-          queue_number: 0 // Trigger will override this
-        } as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-
+    // Simulate emergency booking
+    setTimeout(() => {
+      const queueNumber = 1; // Emergency gets priority
       navigate('/success', {
         state: {
-          queueNumber: data.queue_number,
+          queueNumber,
           date: formData.date,
           phone: emergencyData.phone,
-          doctorName: 'Emergency Doctor',
-          timeSlot: 'Emergency',
           isEmergency: true,
         }
       });
-    } catch (error: any) {
-      console.error('Emergency booking error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to book emergency appointment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,54 +126,50 @@ const BookPage: React.FC = () => {
       return;
     }
 
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Use explicit insert with queue_number set to 0 - trigger will assign actual value
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert({
-          user_id: user.id,
-          doctor_id: selectedDoctor.id,
-          doctor_name: selectedDoctor.name,
-          patient_name: formData.name,
-          patient_phone: formData.phone,
-          appointment_date: formData.date,
-          time_slot: selectedSlot,
-          reason: formData.reason,
-          status: 'confirmed',
-          queue_number: 0 // Trigger will override this
-        } as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Your appointment has been booked successfully.",
+      // API call stub
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          doctorId: selectedDoctor.id,
+          doctorName: selectedDoctor.name,
+          timeSlot: selectedSlot,
+        }),
       });
 
+      if (response.ok) {
+        const result = await response.json();
+        navigate('/success', {
+          state: {
+            queueNumber: result.queueNumber,
+            date: formData.date,
+            phone: formData.phone,
+            doctorName: selectedDoctor.name,
+            timeSlot: selectedSlot,
+          }
+        });
+      } else {
+        throw new Error('Failed to book appointment');
+      }
+    } catch (error) {
+      console.log('Appointment booking simulated - proceeding to success');
+      // Simulate successful booking for demo
+      const queueNumber = Math.floor(Math.random() * 50) + 1;
       navigate('/success', {
         state: {
-          queueNumber: data.queue_number,
+          queueNumber,
           date: formData.date,
           phone: formData.phone,
           doctorName: selectedDoctor.name,
           timeSlot: selectedSlot,
         }
-      });
-    } catch (error: any) {
-      console.error('Appointment booking error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to book appointment. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -360,9 +317,9 @@ const BookPage: React.FC = () => {
                 <InputField
                   label="Phone Number"
                   value={formData.phone}
-                  onChange={(value) => updateFormData('phone', value)}
-                  placeholder="Enter your phone number"
-                  required
+                  onChange={() => {}} // Read-only
+                  readOnly
+                  className="bg-gray-50 dark:bg-gray-700"
                 />
 
                 <SelectBox

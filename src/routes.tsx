@@ -1,83 +1,144 @@
 
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Index from './pages/Index';
+import { useAuth } from './hooks/useAuth';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import BookPage from './pages/BookPage';
 import SuccessPage from './pages/SuccessPage';
 import AppointmentsPage from './pages/AppointmentsPage';
-import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
-import EmailConfirmationPage from './pages/EmailConfirmationPage';
-import NotFound from './pages/NotFound';
-import { useAuth } from './hooks/useAuth';
+import AdminLayout from './components/AdminLayout';
 
-// Protected route wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
+// Private Route Component for Patients
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isPatient, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-  
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
-
-// Admin route wrapper
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" />;
+    return <Navigate to="/login" replace />;
   }
   
-  if (!isAdmin()) {
-    return <Navigate to="/" />;
+  if (!isPatient()) {
+    return <Navigate to="/admin" replace />;
   }
   
   return <>{children}</>;
 };
 
-// Public route wrapper (redirects authenticated users)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
+// Admin Route Component
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/book" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  
+  if (!isAdmin()) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return (
+    <AdminLayout>
+      {children}
+    </AdminLayout>
+  );
 };
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
-      <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
-      <Route path="/success" element={<ProtectedRoute><SuccessPage /></ProtectedRoute>} />
-      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-      <Route path="*" element={<NotFound />} />
+      
+      {/* Patient Routes */}
+      <Route 
+        path="/book" 
+        element={
+          <PrivateRoute>
+            <BookPage />
+          </PrivateRoute>
+        } 
+      />
+      <Route 
+        path="/appointments" 
+        element={
+          <PrivateRoute>
+            <AppointmentsPage />
+          </PrivateRoute>
+        } 
+      />
+      <Route 
+        path="/success" 
+        element={
+          <PrivateRoute>
+            <SuccessPage />
+          </PrivateRoute>
+        } 
+      />
+      
+      {/* Admin Routes */}
+      <Route 
+        path="/admin" 
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/appointments" 
+        element={
+          <AdminRoute>
+            <div>Admin Appointments Page (Coming Soon)</div>
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/patients" 
+        element={
+          <AdminRoute>
+            <div>Admin Patients Page (Coming Soon)</div>
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/doctors" 
+        element={
+          <AdminRoute>
+            <div>Admin Doctors Page (Coming Soon)</div>
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/reports" 
+        element={
+          <AdminRoute>
+            <div>Admin Reports Page (Coming Soon)</div>
+          </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <AdminRoute>
+            <div>Admin Settings Page (Coming Soon)</div>
+          </AdminRoute>
+        } 
+      />
+      
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
