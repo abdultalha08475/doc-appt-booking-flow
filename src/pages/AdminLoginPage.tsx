@@ -6,7 +6,6 @@ import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { User } from '../types';
 
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,25 +23,18 @@ const AdminLoginPage: React.FC = () => {
     setError('');
 
     try {
-      // Simulate admin login API call
-      if (credentials.email === 'admin@clinic.com' && credentials.password === 'admin123') {
-        const adminUser: User = {
-          id: 'admin1',
-          name: 'Admin User',
-          phone: '+919876543210',
-          role: 'admin',
-          email: credentials.email,
-          isActive: true
-        };
+      const { data, error } = await login(credentials.email, credentials.password);
 
-        const authToken = `admin_auth_${Date.now()}_${Math.random()}`;
-        login(adminUser, authToken);
-        navigate('/admin');
-      } else {
-        setError('Invalid email or password');
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      setError('Login failed. Please try again.');
+
+      if (data.user) {
+        navigate('/admin');
+      }
+    } catch (error: any) {
+      console.error('Admin login error:', error);
+      setError(error.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -109,7 +101,7 @@ const AdminLoginPage: React.FC = () => {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Demo credentials: admin@clinic.com / admin123
+              Note: Admin access requires proper authentication
             </p>
           </div>
         </Card>

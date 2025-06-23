@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { logout, user } = useAuth();
+  const { logout, userProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,7 +46,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             Admin Panel
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Welcome, {user?.name}
+            Welcome, {userProfile?.name || 'Admin'}
           </p>
         </div>
         
