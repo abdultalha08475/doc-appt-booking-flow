@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import BookPage from './pages/BookPage';
 import SuccessPage from './pages/SuccessPage';
@@ -16,7 +17,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const { isAuthenticated, isPatient, loading } = useAuth();
   
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
   if (!isAuthenticated) {
@@ -35,7 +36,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
   
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
   if (!isAuthenticated) {
@@ -58,6 +59,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       
       {/* Patient Routes */}

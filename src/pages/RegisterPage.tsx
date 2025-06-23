@@ -1,19 +1,21 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import HeaderNav from '../components/HeaderNav';
 import Footer from '../components/Footer';
 import InputField from '../components/InputField';
 import NotificationBanner from '../components/NotificationBanner';
 import { Button } from '@/components/ui/button';
 
-const LoginPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: '',
+    phone: ''
   });
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{
@@ -25,12 +27,20 @@ const LoginPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
+    if (formData.password !== formData.confirmPassword) {
       setNotification({
-        message: 'Please fill in all fields',
+        message: 'Passwords do not match',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setNotification({
+        message: 'Password must be at least 6 characters long',
         type: 'error'
       });
       return;
@@ -38,23 +48,38 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await login(formData.email, formData.password);
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: formData.name,
+            phone: formData.phone
+          }
+        }
+      });
 
       if (error) {
         throw error;
       }
 
-      if (data.user) {
+      if (data.user && !data.session) {
         setNotification({
-          message: 'Login successful! Redirecting...',
+          message: 'Please check your email for verification link to complete registration',
           type: 'success'
         });
-        setTimeout(() => navigate('/book'), 1000);
+      } else {
+        setNotification({
+          message: 'Registration successful! Redirecting...',
+          type: 'success'
+        });
+        setTimeout(() => navigate('/book'), 2000);
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Registration error:', error);
       setNotification({
-        message: error.message || 'Login failed. Please check your credentials.',
+        message: error.message || 'Registration failed. Please try again.',
         type: 'error'
       });
     } finally {
@@ -74,25 +99,17 @@ const LoginPage: React.FC = () => {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Sign In
+              Create Account
             </h2>
             <p className="text-gray-600">
-              Welcome back! Please sign in to your account
+              Join us to book appointments easily
             </p>
             <div className="mt-4">
               <Link 
-                to="/register" 
+                to="/login" 
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
-                Don't have an account? Register here
-              </Link>
-            </div>
-            <div className="mt-2">
-              <Link 
-                to="/admin/login" 
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                Are you an admin? Login here
+                Already have an account? Sign in here
               </Link>
             </div>
           </div>
@@ -108,7 +125,15 @@ const LoginPage: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleRegister} className="space-y-6">
+              <InputField
+                label="Full Name"
+                value={formData.name}
+                onChange={(value) => handleInputChange('name', value)}
+                placeholder="Enter your full name"
+                required
+              />
+
               <InputField
                 label="Email Address"
                 type="email"
@@ -119,11 +144,29 @@ const LoginPage: React.FC = () => {
               />
 
               <InputField
+                label="Phone Number"
+                type="tel"
+                value={formData.phone}
+                onChange={(value) => handleInputChange('phone', value)}
+                placeholder="Enter your phone number"
+                required
+              />
+
+              <InputField
                 label="Password"
                 type="password"
                 value={formData.password}
                 onChange={(value) => handleInputChange('password', value)}
-                placeholder="Enter your password"
+                placeholder="Create a password (min 6 characters)"
+                required
+              />
+
+              <InputField
+                label="Confirm Password"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(value) => handleInputChange('confirmPassword', value)}
+                placeholder="Confirm your password"
                 required
               />
               
@@ -132,7 +175,7 @@ const LoginPage: React.FC = () => {
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
           </div>
@@ -144,4 +187,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

@@ -10,10 +10,10 @@ interface HeaderNavProps {
 }
 
 const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, logout, userProfile } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -35,7 +35,7 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ children }) => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Welcome, {user?.name}
+                  Welcome, {userProfile?.name || 'User'}
                 </span>
                 <Button
                   variant="outline"
