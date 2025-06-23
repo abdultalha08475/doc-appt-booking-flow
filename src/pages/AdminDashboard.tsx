@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { ClinicStats, Appointment } from '../types';
@@ -31,6 +30,40 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Set up real-time subscription for appointments
+    const channel = supabase
+      .channel('admin-dashboard-appointments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'appointments'
+        },
+        (payload) => {
+          console.log('Real-time appointment change:', payload);
+          
+          // Show toast notification for new bookings
+          if (payload.eventType === 'INSERT') {
+            const newAppointment = payload.new as any;
+            toast({
+              title: "New Appointment Booked!",
+              description: `${newAppointment.patient_name} has booked an appointment for ${newAppointment.appointment_date}`,
+            });
+          }
+          
+          // Refresh dashboard data when any appointment changes
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -71,7 +104,7 @@ const AdminDashboard: React.FC = () => {
       // Calculate statistics
       const totalPatients = new Set(allAppointments?.map(apt => apt.patient_name) || []).size;
       const todayCount = todayAppointments?.length || 0;
-      const pendingCount = allAppointments?.filter(apt => apt.status === 'pending').length || 0;
+      const pendingCount = allAppointments?.filter(apt => apt.status === 'pending' || apt.status === 'confirmed').length || 0;
       const completedCount = allAppointments?.filter(apt => apt.status === 'completed').length || 0;
       
       // Mock revenue calculation (you can implement actual pricing logic)
