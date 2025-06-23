@@ -90,7 +90,9 @@ export type Database = {
     }
     Functions: {
       get_next_queue_number: {
-        Args: { appointment_date: string }
+        Args:
+          | { appointment_date: string }
+          | { appointment_date: string; doctor_id: string }
         Returns: number
       }
     }

@@ -9,13 +9,15 @@ interface TimeSlotPickerProps {
   selectedSlot: string | null;
   onSelectSlot: (slotId: string) => void;
   loading?: boolean;
+  doctorName?: string;
 }
 
 const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   slots,
   selectedSlot,
   onSelectSlot,
-  loading
+  loading,
+  doctorName = "Dr. Sarah Johnson"
 }) => {
   if (loading) {
     return (
@@ -55,9 +57,18 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 
   return (
     <div className="space-y-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          Available Slots for {doctorName}
+        </h3>
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          Select your preferred appointment time. Queue numbers will be assigned automatically.
+        </p>
+      </div>
+
       <div>
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Morning Slots
+          Morning Slots (9:00 AM - 12:00 PM)
         </h4>
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
           {morningSlots.map(slot => <SlotButton key={slot.id} slot={slot} />)}
@@ -66,7 +77,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 
       <div>
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Afternoon Slots
+          Afternoon Slots (2:00 PM - 6:00 PM)
         </h4>
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
           {afternoonSlots.map(slot => <SlotButton key={slot.id} slot={slot} />)}
